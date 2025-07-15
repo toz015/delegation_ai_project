@@ -10,6 +10,7 @@ from common.utils import fix_seeds, read_json, read_txt
 from eval_src.Evaluator import *
 from run_src.rstar_utils import concat_solution_trace, mask_solution_trace
 from models.vLLM_API import load_vLLM_model, generate_with_vLLM_model
+from models.HuggingFace_API import load_HF_model, generate_with_HF_model
 
 from argparse import ArgumentParser
 from collections import defaultdict
@@ -228,10 +229,16 @@ class Discriminator:
     def _gen_func(self, gen_model, gen_input, temperature: float, n: int = 1, max_tokens: int = 768, stop_tokens=None):
         if temperature == 0.0:
             n = 1
+        response = None
+        if self.args.api == "vLLM":
+            response = generate_with_vLLM_model(
+                model=gen_model, input=gen_input, temperature=temperature, n=n, max_tokens=max_tokens, stop=stop_tokens
+            )
+        elif self.args.api == "huggingface":
+            response = generate_with_HF_model(
+                tokenizer=self.tokenizer, model=gen_model, input=gen_input, temperature=temperature, n=n, max_tokens=max_tokens, stop=stop_tokens
+            )
 
-        response = generate_with_vLLM_model(
-            model=gen_model, input=gen_input, temperature=temperature, n=n, max_tokens=max_tokens, stop=stop_tokens
-        )
         if n == 1:
             if isinstance(gen_input, str):
                 return response[0].outputs[0].text
@@ -317,6 +324,10 @@ class MajorityVoteDiscriminator(Discriminator):
         self.tokenizer, self.model = None, None
         if self.args.api == "vllm":
             self.tokenizer, self.model = load_vLLM_model(args.model_ckpt, args.seed, max_num_seqs=args.max_num_seqs)
+        elif self.args.api == "huggingface":
+            self.tokenizer, self.model = load_HF_model(args.model_ckpt)
+        else:
+            print("Unspecify Model")  
 
     def select(self, problem: str, candidates: list[Candidate], gt_answer: str = None, aux={}) -> Candidate:
         print(f"==> Ground truth answer: {gt_answer}")
