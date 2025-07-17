@@ -345,64 +345,27 @@ class MajorityVoteDiscriminator(Discriminator):
         return self._find_winner_filtered(prefiltered_candidates, filtered_candidates, gt_answer)
 
 
-def main():
-    parser = ArgumentParser()
-    parser.add_argument("--note", type=str, default="default")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--api", type=str, default="vllm")
-    parser.add_argument("--model_ckpt", type=str, required=True)
-    parser.add_argument("--root_dir", type=str, required=True)
-    parser.add_argument("--dataset_name", type=str, required=True)
-    parser.add_argument("--resume", type=str, default=None)
-
-    parser.add_argument("--threshold", type=float, default=0.999)
-
-    # vLLM
-    parser.add_argument("--max_num_seqs", type=int, default=256)
-
-    # For multi-choice
-    parser.add_argument("--multi_choice_prompt_type", type=str, default=None, choices=["fewshot", "instruct"])
-
-    # For reasoning consistency
-    parser.add_argument("--mask_left_boundary", type=float, default=0.2)
-    parser.add_argument("--mask_right_boundary", type=float, default=0.5)
-    parser.add_argument("--num_masked_solution_traces", type=int, default=4)
-    parser.add_argument("--rc_mode", type=str, default="mid", choices=["loose", "mid", "strict", "maj"])
-    parser.add_argument("--rc_temperature", type=float, default=1.0)
-    parser.add_argument("--rc_n_completions", type=int, default=1)
-    parser.add_argument("--rc_criteria", type=str, default="reward", choices=["freq", "reward"])
-
-    # For rollout
-    parser.add_argument("--cutoff_rollout", type=int, default=-1)
-    parser.add_argument("--start_idx", type=int, default=-1)
-    parser.add_argument("--end_idx", type=int, default=-1)
-
-    args = parser.parse_args()
-
-    args.fewshot_config_path = os.path.join("prompts", args.dataset_name, "fewshot_cot", "fewshot_cot_config.json")
-    args.fewshot_prompt_path = os.path.join("prompts", args.dataset_name, "fewshot_cot", "fewshot_cot_prompt.txt")
-
+def main(args):
     fix_seeds(args.seed)
     print(args)
-
-    answer_sheets_dir = os.path.join(args.root_dir, "answer_sheets")
-    if args.resume:
-        exp_id = args.resume
-    else:
+    if not hasattr(args, 'discriminate_results_dir'):
+        print("Setting up output directories from within main function...")
         exp_id = f"dis_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}---{args.note}"
+        discriminate_out_dir = os.path.join(args.root_dir, exp_id)
+        os.makedirs(discriminate_out_dir, exist_ok=True)
+        args.discriminate_results_dir = os.path.join(discriminate_out_dir, "results")
+        os.makedirs(args.discriminate_results_dir, exist_ok=True)
+    
+    # 定义 recording 和 recording_file 变量
+    recording_file = os.path.join(args.discriminate_results_dir, "..", "recording.json")
+    recording = vars(deepcopy(args)) # 复制一份args用于记录，避免后续修改影响记录
+    
+    print(args)
 
-    discriminate_out_dir = os.path.join(args.root_dir, exp_id)
-    os.makedirs(discriminate_out_dir, exist_ok=True)
-    args.discriminate_results_dir = os.path.join(discriminate_out_dir, "results")
-    os.makedirs(args.discriminate_results_dir, exist_ok=True)
-
-    recording_file = os.path.join(discriminate_out_dir, "recording.json")
-
-    recording = vars(args)
-
+    # --- Setup ---
     evaluator = eval(f"{args.dataset_name}Evaluator()")
     discriminator = MajorityVoteDiscriminator(args, evaluator)
-
+    answer_sheets_dir = os.path.join(args.root_dir, "answer_sheets")
     #! ------ Select winner candidate for each example ------
     answer_sheet_json_files = [
         os.path.join(answer_sheets_dir, f) for f in os.listdir(answer_sheets_dir) if f.endswith("Answer.json")
@@ -584,4 +547,32 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # This block now mirrors do_generator.py exactly.
+    # It only runs when the script is executed directly.
+    parser = ArgumentParser()
+
+    # --- Add ALL arguments here ---
+    parser.add_argument("--note", type=str, default="default")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--api", type=str, default="vllm")
+    parser.add_argument("--model_ckpt", type=str, required=True)
+    parser.add_argument("--root_dir", type=str, required=True)
+    parser.add_argument("--dataset_name", type=str, required=True)
+    # ... (Add all other arguments from your original discriminator file)
+    parser.add_argument("--rc_criteria", type=str, default="reward", choices=["freq", "reward"])
+
+    args = parser.parse_args()
+
+    # --- Post-process args and call main ---
+    # Construct paths based on args
+    args.fewshot_config_path = os.path.join("prompts", args.dataset_name, "fewshot_cot", "fewshot_cot_config.json")
+    args.fewshot_prompt_path = os.path.join("prompts", args.dataset_name, "fewshot_cot", "fewshot_cot_prompt.txt")
+
+    # Setup output directories
+    exp_id = f"dis_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}---{args.note}"
+    discriminate_out_dir = os.path.join(args.root_dir, exp_id)
+    os.makedirs(discriminate_out_dir, exist_ok=True)
+    args.discriminate_results_dir = os.path.join(discriminate_out_dir, "results")
+    os.makedirs(args.discriminate_results_dir, exist_ok=True)
+    # Call the core logic function
+    main(args)
