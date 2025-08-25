@@ -9,7 +9,7 @@ sys.path.append(".")
 from common.utils import fix_seeds, setup_model_parallel, read_json
 from common.arguments import get_parser, post_process_args, save_args
 from run_src.rstar_utils import GeneratorError
-from MCTS_for_reasoning import Generator, search_for_answers
+from run_src.MCTS_for_reasoning import Generator, search_for_answers
 from eval_src.Evaluator import *
 
 
@@ -30,28 +30,31 @@ def main(args):
     if args.api == "huggingface":
         from models.HuggingFace_API import load_HF_model
 
-        tokenizer, model = load_HF_model(args.model_ckpt)
+        tokenizer, model = load_HF_model(args.model_ckpt, args.hf_token)
     elif args.api == "vllm":
         from models.vLLM_API import load_vLLM_model
 
-        tokenizer, model = load_vLLM_model(args.model_ckpt, args.seed, args.tensor_parallel_size, args.half_precision)
+        tokenizer, model = load_vLLM_model(args.model_ckpt, args.hf_token, args.seed, args.tensor_parallel_size, args.half_precision)
     elif args.api == "gpt3.5-turbo":
         from models.OpenAI_API import load_OpenAI_model
 
         tokenizer, model = load_OpenAI_model(args.model_ckpt)
     generator = Generator(args, tokenizer, model, evaluator)
-
+    print("\nCall model")
     total_correct = 0
     total_correct_limit = 0
     num_tested = 0
     start_time = time.time()
-
+    
     for i, data_item in enumerate(
         (pbar := tqdm(data_item_list, disable=args.local_rank > 0 or args.verbose, position=1))
     ):
-        if i < args.start_idx or i >= args.end_idx:
+        if i < args.start_idx:
             continue
-
+        if i >= args.end_idx:
+            print(f"\n✅ Reached end_idx ({args.end_idx}). Stopping processing.")
+            break
+        print(f"\nStart with question {i}")
         problem_id, problem, gt_solution = data_item["id"], data_item["problem"], data_item["solution"]
         gt_answer = evaluator.extract_answer_from_gold_solution(gt_solution)
 
@@ -83,10 +86,10 @@ def main(args):
         #     js["other_error"] = {"text": str(e)}
 
         num_tested += 1
-
+        print(f"\n Start write in file")
         with open(os.path.join(args.answer_sheets_dir, f"Question {i:04d} - Answer.json"), "w") as f:
             json.dump(js, f)
-
+        print(f"\n End write in file")
         with open(os.path.join(args.run_outputs_dir, "intermediate_result.txt"), "w") as f:
             f.write(
                 f"Total calls: {generator.io.call_counter}, Avg calls: {generator.io.call_counter/(num_tested):.2f}\n"
@@ -97,9 +100,9 @@ def main(args):
 
     end_time = time.time()
 
-    print(f"==> Total calls: {generator.io.call_counter}, Avg calls: {generator.io.call_counter/(num_tested):.2f}")
-    print(f"==> Total tokens: {generator.io.token_counter}, Avg tokens: {generator.io.token_counter/(num_tested):.2f}")
-    print(f"==> Total time: {end_time-start_time:.2f}s, Avg time: {(end_time-start_time)/(num_tested):.2f}s")
+    # print(f"==> Total calls: {generator.io.call_counter}, Avg calls: {generator.io.call_counter/(num_tested):.2f}")
+    # print(f"==> Total tokens: {generator.io.token_counter}, Avg tokens: {generator.io.token_counter/(num_tested):.2f}")
+    # print(f"==> Total time: {end_time-start_time:.2f}s, Avg time: {(end_time-start_time)/(num_tested):.2f}s")
 
     with open(os.path.join(args.run_outputs_dir, "final_result.txt"), "w") as f:
         f.write(f"Total calls: {generator.io.call_counter}, Avg calls: {generator.io.call_counter/(num_tested):.2f}\n")

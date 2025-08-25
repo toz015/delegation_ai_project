@@ -1,6 +1,18 @@
-**/__pycache__
-**/.DS_Store
-tmp
-**/nohup.out
-**/out
-**/keys
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Output files
+outputs/
+*.json
+*.csv
+*.png
+*.log
+# Large files
+*.ipynb
+*.jpg
+*.png
+*.tar.gz
+rstar-*
+

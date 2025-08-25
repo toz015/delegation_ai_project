@@ -17,7 +17,7 @@ except:
 from models.IO_System import IO_System
 from common.utils import read_txt, read_json
 from eval_src.Evaluator import Evaluator, GSM8KEvaluator
-from MCTS_backbone import MCTS_Searcher, MCTS_Node
+from run_src.MCTS_backbone import MCTS_Searcher, MCTS_Node
 from run_src.rstar_utils import (
     Node_Type,
     GeneratorError,
@@ -1025,6 +1025,7 @@ def search_for_answers(args, user_question: str, question_id: int, gt_answer: st
     model_all_solutions = []
     model_rollout_nodes = []
     for i in (pbar := trange(args.num_rollouts, disable=True, position=0)):
+        print(f"\nStart on # {i} solution trace")
         rollout_node = mcts_searcher.do_rollout(root_node, i)
         model_rollout_nodes.append(rollout_node)
 

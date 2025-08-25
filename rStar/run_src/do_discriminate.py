@@ -108,6 +108,29 @@ class Discriminator:
         self.stop_tokens = self.fewshot_config["stop_tokens"]
 
         self.fewshot_prompt = read_txt(args.fewshot_prompt_path)
+        
+        # In-memory cache for current question's candidate answers only
+        # Key: answer_hash, Value: raw_survival_rate
+        self.survival_rate_cache = {}
+        
+    def _get_cache_key(self, answer: str) -> str:
+        """Generate a cache key for answer (question context not needed for in-memory)"""
+        import hashlib
+        return hashlib.md5(str(answer).encode()).hexdigest()[:6]
+    
+    def _get_cached_survival_rate(self, answer: str) -> float:
+        """Get cached raw survival rate if available"""
+        cache_key = self._get_cache_key(answer)
+        return self.survival_rate_cache.get(cache_key, None)
+    
+    def _cache_survival_rate(self, answer: str, raw_survival_rate: float):
+        """Cache raw survival rate for current question"""
+        cache_key = self._get_cache_key(answer)
+        self.survival_rate_cache[cache_key] = raw_survival_rate
+    
+    def clear_cache(self):
+        """Clear cache for new question"""
+        self.survival_rate_cache.clear()
 
     def _filter_none(self, candidates: list[Candidate]) -> list[Candidate]:
         candidates = [c for c in candidates if c.final_answer is not None]
@@ -132,10 +155,29 @@ class Discriminator:
             for c in candidates
             if c.c_type == "default"
         )
+        
+        # Check cache first for already evaluated answers
+        cached_candidates = []
+        uncached_candidates = []
+        
+        for c in candidates:
+            cached_rate = self._get_cached_survival_rate(c.final_answer)
+            if cached_rate is not None:
+                # Use cached result - mark as consistent if survival rate > 0
+                if cached_rate > 0:
+                    cached_candidates.append(c)
+            else:
+                uncached_candidates.append(c)
+        
+        # If all candidates are cached, return early
+        if not uncached_candidates:
+            return cached_candidates
+        
+        # Process only uncached candidates
         gen_input_list = []
         ground_truth_list = []
         c_completion_num_list = []
-        for c in candidates:
+        for c in uncached_candidates:
             for masked_solution_trace in c.masked_solution_trace_list:
                 for _ in range(self.args.rc_n_completions):
                     gen_input_list.append(
@@ -146,7 +188,7 @@ class Discriminator:
         """gen_input_list:
         [c1_mask1, c1_mask2, ..., c2_mask1, c2_mask2, ..., ......, ct_mask1, ct_mask2, ...]
         """
-
+        #print(f" gen_input_list: {gen_input_list}")
         # Manually split into batches
         batch_size = self.args.max_num_seqs // self.args.rc_n_completions // 2
         gen_output_list = []
@@ -202,7 +244,7 @@ class Discriminator:
         consistent_candidates = []
 
         for c, completion_group, answer_group, gt_answer in zip(
-            candidates, completion_group_list, answer_group_list, gt_group_list
+            uncached_candidates, completion_group_list, answer_group_list, gt_group_list
         ):
             candidate_group_size = len(c.masked_solution_trace_list)
             num_consistent = 0
@@ -210,31 +252,43 @@ class Discriminator:
                 answer = self.evaluator.find_most_confident_answer(completion_group)[0]
                 if self.evaluator.check_answers_equiv(gt_answer[-1], answer):
                     consistent_candidates.append(c)
+                    # Cache the raw survival rate (1.0 for consistent)
+                    self._cache_survival_rate(c.final_answer, 1.0)
+                else:
+                    # Cache the raw survival rate (0.0 for inconsistent)
+                    self._cache_survival_rate(c.final_answer, 0.0)
             else:
                 for answer, gt_a in zip(answer_group, gt_answer):
                     if self.evaluator.check_answers_equiv(gt_a, answer):
                         num_consistent += 1
+                
+                # Calculate raw survival rate based on consistency mode
                 if self.args.rc_mode == "loose":
-                    if num_consistent > 0:
-                        consistent_candidates.append(c)
+                    raw_survival_rate = 1.0 if num_consistent > 0 else 0.0
                 elif self.args.rc_mode == "mid":
-                    if num_consistent >= candidate_group_size // 2:
-                        consistent_candidates.append(c)
+                    raw_survival_rate = 1.0 if num_consistent >= candidate_group_size // 2 else 0.0
                 elif self.args.rc_mode == "strict":
-                    if num_consistent == candidate_group_size:
-                        consistent_candidates.append(c)
-
-        return consistent_candidates
+                    raw_survival_rate = 1.0 if num_consistent == candidate_group_size else 0.0
+                
+                # Cache the raw survival rate
+                self._cache_survival_rate(c.final_answer, raw_survival_rate)
+                
+                # Add to consistent candidates if survival rate > 0
+                if raw_survival_rate > 0:
+                    consistent_candidates.append(c)
+        
+        # Combine cached and newly evaluated consistent candidates
+        return cached_candidates + consistent_candidates
 
     def _gen_func(self, gen_model, gen_input, temperature: float, n: int = 1, max_tokens: int = 768, stop_tokens=None):
         if temperature == 0.0:
             n = 1
         response = None
-        if self.args.api == "vLLM":
+        if self.args.api.lower() == "vllm":
             response = generate_with_vLLM_model(
                 model=gen_model, input=gen_input, temperature=temperature, n=n, max_tokens=max_tokens, stop=stop_tokens
             )
-        elif self.args.api == "huggingface":
+        elif self.args.api.lower() == "huggingface":
             response = generate_with_HF_model(
                 tokenizer=self.tokenizer, model=gen_model, input=gen_input, temperature=temperature, n=n, max_tokens=max_tokens, stop=stop_tokens
             )
@@ -254,7 +308,7 @@ class Discriminator:
         _, filtered_answer2confidence, filtered_answer2cnt = group_candidates_by_answer(
             filtered_candidates, self.evaluator, self.args.rc_criteria
         )
-        print(f"==> Confidence: {filtered_answer2confidence}")
+       # print(f"==> Confidence: {filtered_answer2confidence}")
         _, _, unfiltered_answer2cnt = group_candidates_by_answer(
             unfiltered_candidates, self.evaluator, self.args.rc_criteria
         )
@@ -272,7 +326,7 @@ class Discriminator:
             if not has_existed:
                 filtered_answer2survival_rate[filtered_ans] = 0.0
 
-        print(f"==> Survival rates: {filtered_answer2survival_rate}")
+        #print(f"==> Survival rates: {filtered_answer2survival_rate}")
 
         filtered_answer2score = {}
         for filtered_ans in filtered_answer2confidence.keys():
@@ -300,17 +354,17 @@ class Discriminator:
             )
             most_confident_answer = max(answer2confidence.keys(), key=lambda x: answer2confidence[x])
             winner = answer2candidates[most_confident_answer][0]
-            print(f"==> Winner answer: {most_confident_answer}\n")
+            # print(f"==> Winner answer: {most_confident_answer}\n")
         elif len(filtered_candidates) == 1:
             winner = filtered_candidates[0]
-            print(f"==> Winner answer: {winner.final_answer}\n")
+            # print(f"==> Winner answer: {winner.final_answer}\n")
         elif not any(self.evaluator.check_answers_equiv(c.final_answer, gt_answer) for c in filtered_candidates):
             winner = None
-            print(f"==> Winner answer: None")
+            # print(f"==> Winner answer: None")
         else:
             filtered_answer2score = self._calculate_scores(unfiltered_candidates, filtered_candidates)
             winner_answer = max(filtered_answer2score.keys(), key=lambda x: filtered_answer2score[x])
-            print(f"==> Winner answer: {winner_answer}")
+            # print(f"==> Winner answer: {winner_answer}")
             winner = next(
                 c for c in filtered_candidates if self.evaluator.check_answers_equiv(c.final_answer, winner_answer)
             )
@@ -323,25 +377,37 @@ class MajorityVoteDiscriminator(Discriminator):
         super().__init__(args, evaluator)
         self.tokenizer, self.model = None, None
         if self.args.api == "vllm":
-            self.tokenizer, self.model = load_vLLM_model(args.model_ckpt, args.seed, max_num_seqs=args.max_num_seqs)
+            self.tokenizer, self.model = load_vLLM_model(
+                args.model_ckpt, 
+                args.hf_token, 
+                args.seed, 
+                max_num_seqs=args.max_num_seqs,
+                max_model_len=getattr(args, 'max_model_len', None),
+                gpu_memory_utilization=getattr(args, 'gpu_memory_utilization', None)
+            )
         elif self.args.api == "huggingface":
-            self.tokenizer, self.model = load_HF_model(args.model_ckpt)
+            self.tokenizer, self.model = load_HF_model(args.model_ckpt, args.hf_token)
         else:
-            print("Unspecify Model")  
-
+            print("Unspecify Model")
+    
+    
     def select(self, problem: str, candidates: list[Candidate], gt_answer: str = None, aux={}) -> Candidate:
         print(f"==> Ground truth answer: {gt_answer}")
 
+        # Clear cache for new question
+        self.clear_cache()
+
         unfiltered_candidates = candidates
-        print(f"==> Unfiltered answers: {[c.final_answer for c in unfiltered_candidates]}")
+        #print(f"==> Unfiltered answers: {[c.final_answer for c in unfiltered_candidates]}")
         # candidate: [1, 2, 3, 4, 5, None, paosdifjpsod]
         prefiltered_candidates = self._filter_none(candidates)
         prefiltered_candidates = self._filter_long(prefiltered_candidates)
         # prefiltered_candidates: [1, 2, 3, 4, 5]
-        print(f"==> Pre-filtered answers: {[c.final_answer for c in prefiltered_candidates]}")
+        #print(f"==> Pre-filtered answers: {[c.final_answer for c in prefiltered_candidates]}")
         filtered_candidates = self._filter_reasoning_consistency(self.model, problem, prefiltered_candidates, aux)
         # filtered_candidates: [1, 2, 3]
-        print(f"==> RC-filtered answers: {[c.final_answer for c in filtered_candidates]}")
+        #print(f"==> RC-filtered answers: {[c.final_answer for c in filtered_candidates]}")
+        
         return self._find_winner_filtered(prefiltered_candidates, filtered_candidates, gt_answer)
 
 
@@ -464,6 +530,29 @@ def main(args):
                 most_confident_answer = max(answer2candidates.keys(), key=lambda x: answer2confidence[x])
                 highest_confidence = answer2confidence[most_confident_answer]
                 assert highest_confidence > 0
+                
+                # Store initial confidence scores for comparison
+                initial_confidence_scores = dict(answer2confidence)
+                
+                # Store individual generator confidence scores (before discrimination)
+                # Each rollout represents a different generator
+                initial_generator_confidence = {}
+                for candidate in all_candidates:
+                    # Each candidate has a rollout_id that identifies the generator
+                    generator_id = candidate.rollout_id if hasattr(candidate, 'rollout_id') else candidate.id
+                    answer = candidate.final_answer
+                    
+                    if answer not in initial_generator_confidence:
+                        initial_generator_confidence[answer] = {}
+                    
+                    # Calculate individual generator confidence based on frequency/reward
+                    if args.rc_criteria == "freq":
+                        generator_conf = candidate.freq
+                    else:  # reward
+                        generator_conf = candidate.trace_reward
+                    
+                    initial_generator_confidence[answer][generator_id] = generator_conf
+                
                 # -------------------------------------------------------------------------
 
                 # candidates = [cands[0] for _, cands in answer2candidates.items()]   #! representative
@@ -475,10 +564,14 @@ def main(args):
                     # In this case, we know that there is no correct answer in the candidates
                     print("Well, no correct answer in candidates. Skipping...")
                     winner_answer = ""
+                    final_survival_rates = {}
+                    final_generator_confidence = {}
                 else:
                     if highest_confidence > args.threshold:
                         print("You are very confident. Skipping...")
                         winner_answer = most_confident_answer
+                        final_survival_rates = {}
+                        final_generator_confidence = {}
                     else:
                         winner_candidate = discriminator.select(
                             problem,
@@ -490,43 +583,100 @@ def main(args):
                             winner_answer = winner_candidate.final_answer
                         else:
                             winner_answer = most_confident_answer
-                # -------------------------------
-                correct = evaluator.check_answers_equiv(winner_answer, gold_answer)
-                correct_majvote = evaluator.check_answers_equiv(most_confident_answer, gold_answer)
-                correct_limit = (
-                    1 if any(evaluator.check_answers_equiv(ans, gold_answer) for ans in answer2candidates.keys()) else 0
-                )
-                print(f"==> Correct: {correct}")
-                try:
-                    with open(os.path.join(args.discriminate_results_dir, f"problem-{problem_id}.json"), "r") as f:
-                        temp_recording = json.load(f)
-                except:
-                    temp_recording = {}
-                temp_recording.update(
-                    {
-                        "correct": correct,
-                        "correct_majvote": correct_majvote,
-                        "correct_limit": correct_limit,
-                    }
-                )
-                with open(os.path.join(args.discriminate_results_dir, f"problem-{problem_id}.json"), "w") as f:
-                    json.dump(temp_recording, f, indent=4)
-                num_correct += int(correct)
-                num_correct_majvote += int(correct_majvote)
-                num_correct_limit += int(correct_limit)
-                num_tested += 1
+                        
+                        # Get final confidence scores for each generator after discrimination
+                        if len(filtered_candidates) > 1:
+                            # Calculate final confidence for each generator
+                            final_generator_confidence = {}
+                            
+                            for candidate in filtered_candidates:
+                                generator_id = candidate.rollout_id if hasattr(candidate, 'rollout_id') else candidate.id
+                                answer = candidate.final_answer
+                                
+                                if answer not in final_generator_confidence:
+                                    final_generator_confidence[answer] = {}
+                                
+                                # Calculate individual generator confidence after filtering
+                                if args.rc_criteria == "freq":
+                                    generator_conf = candidate.freq
+                                else:  # reward
+                                    generator_conf = candidate.trace_reward
+                                
+                                final_generator_confidence[answer][generator_id] = generator_conf
+                            
+                            # Calculate final survival rates
+                            _, _, final_answer2cnt = group_candidates_by_answer(
+                                filtered_candidates, evaluator, args.rc_criteria
+                            )
+                            _, _, unfiltered_answer2cnt = group_candidates_by_answer(
+                                candidates, evaluator, args.rc_criteria
+                            )
+                            
+                            final_survival_rates = {}
+                            for filtered_ans in final_answer2cnt.keys():
+                                for unfiltered_ans in unfiltered_answer2cnt.keys():
+                                    if evaluator.check_answers_equiv(filtered_ans, unfiltered_ans):
+                                        final_survival_rates[filtered_ans] = (
+                                            final_answer2cnt[filtered_ans] / unfiltered_answer2cnt[unfiltered_ans]
+                                        )
+                                        break
+                        else:
+                            final_survival_rates = {}
+                            final_generator_confidence = {}
+            
+            # -------------------------------
+            correct = evaluator.check_answers_equiv(winner_answer, gold_answer)
+            correct_majvote = evaluator.check_answers_equiv(most_confident_answer, gold_answer)
+            correct_limit = (
+                1 if any(evaluator.check_answers_equiv(ans, gold_answer) for ans in answer2candidates.keys()) else 0
+            )
 
-                info = f"Acc: {num_correct / num_tested:.4f}; Majority vote acc: {num_correct_majvote / num_tested:.4f}; Limit acc: {num_correct_limit / num_tested:.4f}"
-                print(info)
-                pbar.set_description(info, refresh=True)
+            try:
+                with open(os.path.join(args.discriminate_results_dir, f"problem-{problem_id}.json"), "r") as f:
+                    temp_recording = json.load(f)
+            except:
+                temp_recording = {}
+            temp_recording.update(
+                {
+                    "correct": correct,
+                    "correct_majvote": correct_majvote,
+                    "correct_limit": correct_limit,
+                    "confidence_evolution": {
+                        "initial_confidence_scores": initial_confidence_scores,
+                        "initial_generator_confidence": initial_generator_confidence,
+                        "final_generator_confidence": final_generator_confidence,
+                        "final_survival_rates": final_survival_rates,
+                        "winner_answer": winner_answer,
+                        "generator_top_answer": most_confident_answer,
+                        "gold_answer": gold_answer,
+                        "model_name": model_name
+                    }
+                }
+            )
+            with open(os.path.join(args.discriminate_results_dir, f"problem-{problem_id}.json"), "w") as f:
+                json.dump(temp_recording, f, indent=4)
+            num_correct += int(correct)
+            num_correct_majvote += int(correct_majvote)
+            num_correct_limit += int(correct_limit)
+            num_tested += 1
+
+            info = f"Acc: {num_correct / num_tested:.4f}; Majority vote acc: {num_correct_majvote / num_tested:.4f}; Limit acc: {num_correct_limit / num_tested:.4f}"
+            print(info)
+            pbar.set_description(info, refresh=True)
 
             pbar.update(1)
     #! --------------------------------------------------------
 
-    print(
-        f"Accuracy: {num_correct / num_tested:.4f}; Majority vote accuracy: {num_correct_majvote / num_tested:.4f}; Limit accuracy: {num_correct_limit / num_tested:.4f}"
-    )
 
+    
+    # Report cache statistics
+    # cache_stats = discriminator.get_cache_stats() # Removed as per edit hint
+    # print(f"\n📊 Cache: {cache_stats['total_entries']} entries, {cache_stats['cache_size_mb']:.2f} MB") # Removed as per edit hint
+    
+    # Save final cache state
+    # discriminator.save_cache() # Removed as per edit hint
+    
+    # Save recording
     recording.update(
         {
             "num_correct": num_correct,

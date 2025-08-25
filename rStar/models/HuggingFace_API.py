@@ -11,10 +11,11 @@ import torch.nn.functional as F
 import numpy as np
 
 
-def load_HF_model(ckpt) -> tuple:
-    tokenizer = AutoTokenizer.from_pretrained(ckpt)
+def load_HF_model(ckpt, hf_token) -> tuple:
+    tokenizer = AutoTokenizer.from_pretrained(ckpt, use_auth_token = hf_token)
     model = AutoModelForCausalLM.from_pretrained(
         ckpt,
+        token = hf_token,
         load_in_8bit=False,
         torch_dtype=torch.float16,
         device_map="auto",
