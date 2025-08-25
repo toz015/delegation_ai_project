@@ -199,7 +199,7 @@ class DelegationAlgorithm:
                         self.discriminate_results_dir = "./temp_discriminator_results"
                         self.api = "vllm"  # Switch to vLLM API for better performance
                         self.model_ckpt = "Qwen/Qwen2-7B-Instruct"  # Add model checkpoint
-                        self.hf_token ="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"  # Add HF token (None for public models)
+                        self.hf_token ="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"  # Add HF token (None for public models)
                         self.seed = 42  # Add seed for reproducibility
                         
                         # Set dataset and prompts paths

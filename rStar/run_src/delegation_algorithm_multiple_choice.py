@@ -77,7 +77,7 @@ class DelegationAlgorithm:
                 
                 self.discriminator_tokenizer, self.discriminator_model = load_HF_model(
                     model_name, 
-                    hf_token="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"  # Public model
+                    hf_token= "token" # "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"  # Public model
                 )
                 
                 # Fix padding token issue for GPT-2 based models

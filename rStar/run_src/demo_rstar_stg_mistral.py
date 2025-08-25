@@ -23,7 +23,7 @@ args.dataset_name = "STG"  # Changed from GSM8K to STG
 
 # ====== MODEL CONFIGURATION ======
 args.model_ckpt = "mistralai/Mistral-7B-Instruct-v0.2"  # Mistral model
-args.hf_token = "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"
+args.hf_token = "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"
 args.note = "rStar_STG_Mistral7B_with_rephrasing_0_100"  # Updated note
 args.test_json_filename = "test_all"  # STG uses test_all.json
 
@@ -41,11 +41,11 @@ args.max_tokens = 256
 args.seed = 42
 
 # ====== vLLM Memory Settings ======
-args.max_model_len = 2048  # Reduced back to 2048 to save memory
-args.gpu_memory_utilization = 0.6  # Reduced from 0.85 to 0.6 to fit available memory
+args.max_model_len = 2048  # Reduced from 4096 to save memory
+args.gpu_memory_utilization = 0.35  # Reduced from 0.6 to fit available memory (~7.7 GiB)
 
 # ====== MCTS settings ======
-args.num_rollouts = 24  # Balanced configuration for speed and quality
+args.num_rollouts = 16  # Balanced configuration for speed and quality
 args.max_depth_allowed = 5
 args.num_a1_steps = None
 args.num_subquestions = 2
@@ -54,7 +54,7 @@ args.disable_a1 = False  # Keep A1 (one-step thoughts) enabled
 args.mcts_discount_factor = 1.0
 args.mcts_exploration_weight = 2.0
 args.mcts_weight_scheduler = "const"
-args.mcts_num_last_votes = 32
+args.mcts_num_last_votes = 16
 
 # ====== Node limits ======
 args.max_nodes_a1_a3 = 5
@@ -67,7 +67,7 @@ args.answer_sheets_dir = "outputs/answer_sheets_mistral_stg"  # Updated for STG
 args.run_outputs_dir = "outputs/run_outputs_mistral_stg"  # Updated for STG
 args.run_outputs_root = args.run_outputs_dir
 args.eval_outputs_root = args.run_outputs_dir
-args.start_idx = 14  # Start from question 0 (first 100 problems)
+args.start_idx = 41 # Start from question 0 (first 100 problems)
 args.end_idx = 100  # Process questions 0-99 (100 questions total)
 
 # ====== Prompt templates ======
