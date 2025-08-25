@@ -16,3 +16,13 @@ outputs/
 *.tar.gz
 rstar-*
 
+
+# Exclude output directories
+outputs/
+run_outputs/
+*.json
+*.png
+*.jpg
+*.tar.gz
+__pycache__/
+*.pyc
