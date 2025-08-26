@@ -41,8 +41,11 @@ args.max_tokens = 256
 args.seed = 42
 
 # ====== vLLM Memory Settings ======
-args.max_model_len = 2048  # Reduced from 4096 to save memory
-args.gpu_memory_utilization = 0.35  # Reduced from 0.6 to fit available memory (~7.7 GiB)
+args.max_model_len = 4096  # Increased from 2048 to handle longer prompts
+args.gpu_memory_utilization = 0.85  # Increased for better memory usage
+args.max_num_seqs = 128  # Maximum number of sequences for vLLM
+args.tensor_parallel_size = 1  # Single GPU
+args.half_precision = True  # Use half precision for memory efficiency
 
 # ====== MCTS settings ======
 args.num_rollouts = 16  # Balanced configuration for speed and quality
@@ -67,7 +70,7 @@ args.answer_sheets_dir = "outputs/answer_sheets_mistral_stg"  # Updated for STG
 args.run_outputs_dir = "outputs/run_outputs_mistral_stg"  # Updated for STG
 args.run_outputs_root = args.run_outputs_dir
 args.eval_outputs_root = args.run_outputs_dir
-args.start_idx = 41 # Start from question 0 (first 100 problems)
+args.start_idx = 50 # Start from question 0 (first 100 problems)
 args.end_idx = 100  # Process questions 0-99 (100 questions total)
 
 # ====== Prompt templates ======
@@ -93,6 +96,12 @@ args.verbose = False
 args.modify_prompts_for_rephrasing = False
 args.enable_potential_score = False
 args.save_tree = False
+args.max_num_worker = 3  # Maximum number of workers for dataloader
+args.test_batch_size = 1  # Test batch size
+args.num_beams = 1  # Number of beams for beam search
+args.wandb_mode = "disabled"  # Disable wandb logging
+args.local_rank = 0  # Local rank for distributed training
+args.world_size = 1  # World size for distributed training
 
 # ====== Finalize and run ======
 print("🔧 Processing arguments...")

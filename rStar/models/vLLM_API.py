@@ -20,13 +20,13 @@ def load_vLLM_model(model_ckpt, hf_token, seed, tensor_parallel_size=1, half_pre
             elif "medium" in model_ckpt.lower():
                 max_model_len = 2048
             else:
-                max_model_len = 2048  # Reduced from 4096 to fix KV cache memory issue
+                max_model_len = 4096  # Increased for complex reasoning tasks
         else:
-            max_model_len = min(model_config, 2048)  # Cap at 2048 for safety
+            max_model_len = min(model_config, 4096)  # Cap at 4096 for safety
     
     # Use provided gpu_memory_utilization if specified, otherwise use default
     if gpu_memory_utilization is None:
-        gpu_memory_utilization = 0.9  # Increased from 0.85 for better memory usage
+        gpu_memory_utilization = 0.8  # Increased from 0.85 for better memory usage
     
     print(f"  🔧 Using max_model_len={max_model_len} for {model_ckpt}")
 

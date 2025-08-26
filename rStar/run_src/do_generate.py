@@ -34,7 +34,7 @@ def main(args):
     elif args.api == "vllm":
         from models.vLLM_API import load_vLLM_model
 
-        tokenizer, model = load_vLLM_model(args.model_ckpt, args.hf_token, args.seed, args.tensor_parallel_size, args.half_precision)
+        tokenizer, model = load_vLLM_model(args.model_ckpt, args.hf_token, args.seed, args.tensor_parallel_size, args.half_precision, max_model_len=getattr(args, 'max_model_len', None), gpu_memory_utilization=getattr(args, 'gpu_memory_utilization', None))
     elif args.api == "gpt3.5-turbo":
         from models.OpenAI_API import load_OpenAI_model
 
