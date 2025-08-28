@@ -3,26 +3,16 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Output files
-outputs/
-*.json
-*.csv
-*.png
-*.log
-# Large files
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Large files (but allow outputs)
 *.ipynb
-*.jpg
-*.png
 *.tar.gz
 rstar-*
 
-
-# Exclude output directories
-outputs/
-run_outputs/
-*.json
-*.png
-*.jpg
-*.tar.gz
-__pycache__/
-*.pyc
+# Allow outputs directory for sharing between instances
+# outputs/
+# run_outputs/
