@@ -1,0 +1,1 @@
+{"id": "test-counting_and_probability-1060", "problem": "Determine the number of ways to arrange the letters of the word ELLIPSE.", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "There are two E's, two L's, and seven total letters, so the answer is $\\dfrac{7!}{2! \\times 2!} = \\boxed{1260}$.", "gold_answer": "1260"}
