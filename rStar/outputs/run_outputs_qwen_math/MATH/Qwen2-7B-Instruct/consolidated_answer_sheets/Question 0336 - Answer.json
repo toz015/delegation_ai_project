@@ -1,0 +1,1 @@
+{"id": "test-algebra-2592", "problem": "What is the value of $513^2 - 487^2$?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "We note that this is a difference of squares, so $513^2 - 487^2 = (513+487)(513-487) = (1000)(26) = \\boxed{26000}$.", "gold_answer": "26000"}
