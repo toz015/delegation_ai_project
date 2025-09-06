@@ -1,0 +1,1 @@
+{"id": 208, "problem": "Billionaire: person who has a net worth of at least one billion (1,000,000,000) units of a given currency. Would a 900,000 pound net worth person be an American billionaire if they exchange currency June 2020?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "true", "gold_answer": "true"}

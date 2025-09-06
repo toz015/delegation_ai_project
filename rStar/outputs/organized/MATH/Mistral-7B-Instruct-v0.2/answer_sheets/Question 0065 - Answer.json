@@ -1,0 +1,1 @@
+{"id": "test-prealgebra-1747", "problem": "What is $1^{(2^{235423523})}$?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "One raised to any power is one, so our answer is $\\boxed{1}.$", "gold_answer": "1"}
