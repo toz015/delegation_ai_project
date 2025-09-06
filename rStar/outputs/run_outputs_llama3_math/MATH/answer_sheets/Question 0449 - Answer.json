@@ -1,0 +1,1 @@
+{"id": "test-algebra-2789", "problem": "If $a\\star b = 9a+2b-ab+5$, what is the value of $5\\star1$?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "From the defined function, we know that $5\\star 1 = 9(5)+2(1)-(5)(1)+5= 45+2-5+5=\\boxed{47}$.", "gold_answer": "47"}
