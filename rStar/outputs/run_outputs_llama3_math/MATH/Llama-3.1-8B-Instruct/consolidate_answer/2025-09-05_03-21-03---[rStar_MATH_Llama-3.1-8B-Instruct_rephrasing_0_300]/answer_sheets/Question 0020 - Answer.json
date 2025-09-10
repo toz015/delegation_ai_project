@@ -1,0 +1,1 @@
+{"id": "test-algebra-1098", "problem": "Evaluate $(1+2i)6-3i$.", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "Distribute the factor of 6 and simplify to obtain $(1+2i)6-3i=6+12i-3i=\\boxed{6+9i}$.", "gold_answer": "6+9i"}
