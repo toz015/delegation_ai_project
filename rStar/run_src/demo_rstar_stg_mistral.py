@@ -23,7 +23,7 @@ args.dataset_name = "STG"  # Changed from GSM8K to STG
 
 # ====== MODEL CONFIGURATION ======
 args.model_ckpt = "mistralai/Mistral-7B-Instruct-v0.2"  # Mistral model
-args.hf_token = "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"
+args.YOUR_HUGGINGFACE_TOKEN_HERE = "YOUR_HUGGINGFACE_TOKEN_HERE"
 args.note = "rStar_STG_Mistral7B_with_rephrasing_0_100"  # Updated note
 args.test_json_filename = "test_all"  # STG uses test_all.json
 

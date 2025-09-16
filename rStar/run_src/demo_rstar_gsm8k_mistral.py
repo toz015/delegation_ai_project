@@ -23,7 +23,7 @@ args.dataset_name = "GSM8K"
 
 # ====== MODEL CONFIGURATION ======
 args.model_ckpt = "mistralai/Mistral-7B-Instruct-v0.2"  # Mistral model
-args.hf_token = "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"
+args.YOUR_HUGGINGFACE_TOKEN_HERE = "YOUR_HUGGINGFACE_TOKEN_HERE"
 args.note = "rStar_GSM8K_Mistral7B_with_rephrasing_100_300"
 args.test_json_filename = "test_all"
 

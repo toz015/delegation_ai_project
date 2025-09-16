@@ -28,7 +28,7 @@ args.model_ckpt = "meta-llama/Llama-3.1-8B-Instruct"  # Change this to your desi
 # args.model_ckpt = "mistralai/Mistral-7B-Instruct-v0.2"
 # args.model_ckpt = "meta-llama/Llama-2-7b-chat-hf"
 
-args.hf_token = "token" # "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"
+args.YOUR_HUGGINGFACE_TOKEN_HERE = "token" # "YOUR_HUGGINGFACE_TOKEN_HERE"
 args.note = "rStar_GSM8K_Llama-3.1-8B-Instruct"
 args.test_json_filename = "test_all"
 
