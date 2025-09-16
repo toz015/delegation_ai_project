@@ -1,0 +1,1 @@
+{"id": "test-prealgebra-572", "problem": "Write $\\frac{3}{20}$ as a decimal.", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "Multiplying numerator and denominator by 5 gives $3/20=15/100 = \\boxed{0.15}$.", "gold_answer": "0.15"}
