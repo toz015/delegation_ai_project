@@ -1,0 +1,1 @@
+{"id": "test-prealgebra-1317", "problem": "If $10^x - 10 = 9990,$ what is $x$ equal to?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "Since $10^x - 10 = 9990,$ we have $$10^x = 9990+10=10000.$$If $10^x = 10000,$ then $x=\\boxed{4},$ since $10000$ ends in four zeroes.", "gold_answer": "4"}
