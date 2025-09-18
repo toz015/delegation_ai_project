@@ -1,0 +1,1 @@
+{"id": "test-counting_and_probability-190", "problem": "In how many ways can  5 students be selected from a group of 6 students?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "We can choose 5 students out of a group of 6 students  without regard to order in $\\binom{6}{5} = \\boxed{6}$ ways.", "gold_answer": "6"}
