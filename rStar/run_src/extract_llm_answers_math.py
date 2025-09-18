@@ -8,6 +8,7 @@ from multiple LLM models on the MATH dataset
 import os
 import json
 import sys
+import re
 from itertools import combinations
 from collections import Counter, defaultdict
 from typing import Dict, List, Any
@@ -145,11 +146,13 @@ def extract_answers_from_generator_discriminator(output_dir: str, question_range
                     solution_trace_dic[solution_trace] = {"freq": 1, "reward": reward, "final_step": final_step}
             
             # Create candidates
-            for solution_trace in solution_trace_dic.keys():
+            for idx, solution_trace in enumerate(solution_trace_dic.keys()):
                 final_step = solution_trace_dic[solution_trace]["final_step"]
                 trace_freq = solution_trace_dic[solution_trace]["freq"]
                 trace_reward = solution_trace_dic[solution_trace]["reward"]
-                
+                # print("\n")
+                # print("================================================")
+                # print(f"Processing {idx}th solution_trace ")
                 final_answer = evaluator.extract_answer_from_model_completion(final_step)
                 
                 candidate = Candidate(
@@ -258,7 +261,7 @@ def process_model_combination(selected_models, all_llm_generators, question_rang
     
     # Save results
     model_names = "_".join([name.replace("-", "_") for name in selected_models])
-    output_filename = f"llm_answers_discriminator_MATH_{question_range[0]}_{question_range[1]-1}_{model_names}.json"
+    output_filename = f"llm_answers_discriminator_MATH_{question_range[0]}_{question_range[1]-1}_{model_names}_test.json"
     with open(output_filename, 'w') as f:
         json.dump(output_data, f, indent=2)
     

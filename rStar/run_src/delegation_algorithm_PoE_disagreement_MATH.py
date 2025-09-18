@@ -204,8 +204,8 @@ class DelegationAlgorithm:
                         self.max_num_seqs = 32
                         self.discriminate_results_dir = "./temp_discriminator_results"
                         self.api = "vllm"  # Switch to vLLM API for better performance
-                        self.model_ckpt = "Qwen/Qwen3-8B"  # Use Qwen model for discriminator
-                        self.hf_token ="XXXXX"  # Add HF token (None for public models)
+                        self.model_ckpt = "Qwen/Qwen2-7B-Instruct"  # Use Qwen model for discriminator
+                        self.hf_token ="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"  # Add HF token (None for public models)
                         self.seed = 42  # Add seed for reproducibility
                         # Add memory optimization parameters
                         self.max_model_len = 2048  # Reduced from 4096 to fix KV cache memory
@@ -215,7 +215,7 @@ class DelegationAlgorithm:
                         
                         # Set dataset and prompts paths
                         self.dataset_name = "MATH"
-                        self.prompts_root = "../prompts"
+                        self.prompts_root = "./prompts"
 
                         self.fewshot_config_path = os.path.join(self.prompts_root, self.dataset_name, "fewshot_cot", "fewshot_cot_config.json")
                         self.fewshot_prompt_path = os.path.join(self.prompts_root, self.dataset_name, "fewshot_cot", "fewshot_cot_prompt.txt")
@@ -1368,7 +1368,7 @@ def main():
     
     # Load generator data
     try:
-        data = delegation.load_generator_data('./llm_answers_discriminator_MATH_0_298_Falcon_7B_Zephyr_7B_Beta_Mistral_7B_Instruct_v0.2.json')
+        data = delegation.load_generator_data('./llm_answers_discriminator_MATH_0_298_Zephyr_7B_Beta_Mistral_7B_Instruct_v0.2_Qwen2_7B_Instruct_test.json')
 
         print(f"✅ Loaded data for {len(data['results'])} generators")
       #  print(f"Generators: {', '.join(data['results'].keys())}")

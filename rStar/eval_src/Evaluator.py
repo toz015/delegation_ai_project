@@ -274,6 +274,7 @@ class MATHEvaluator(Evaluator):
     def __init__(self) -> None:
         super().__init__()
 
+    
     def check_answers_equiv(self, answer_a: str, answer_b: str):
         if answer_a is None or answer_b is None:
             return False
@@ -334,9 +335,108 @@ class MATHEvaluator(Evaluator):
 
         return remove_boxed(last_boxed_only_string(solution))
 
+        
+
     def extract_answer_from_model_completion(self, completion):
         answer_split = self.isolate_answer(completion)
+       # print("Before Extracted answer: ", answer_split)
+        
+        # Enhanced cleanup: extract content from \boxed{...} or $...$ if present
+        if answer_split:
+            import re
+            # Handle \boxed{...} format - find the LAST one (most likely final answer)
+            if "\\boxed{" in answer_split:
+                matches = re.findall(r"\\boxed\{([^}]+)\}", answer_split)
+                if matches:
+                    answer_split = matches[-1]  # Get the last match
+            # Handle $...$ format - find the LAST one
+            elif "$" in answer_split:
+                matches = re.findall(r"\$([^$]+)\$", answer_split)
+                if matches:
+                    answer_split = matches[-1]  # Get the last match
+            # For very long answers, try to extract the last formula/expression after =
+            elif len(answer_split) > 100:
+                # Look for patterns like "= ..." at the end
+                match = re.search(r"=\s*([^=\n]+?)(?:\s*$|\s*\n|\s*\.)", answer_split)
+                if match:
+                    answer_split = match.group(1).strip()
+                # If still too long, try to get the last mathematical expression
+                if len(answer_split) > 50:
+                    # Look for the last $...$ or mathematical expression
+                    math_match = re.search(r"([^=\n]+?)(?:\s*$|\s*\n)", answer_split)
+                    if math_match:
+                        answer_split = math_match.group(1).strip()
+        
+       # print("Extracted answer: ", answer_split)
         return answer_split
+
+    # def _normalize_math_answer(self, ans):
+    #     """
+    #     Normalize math answer string from MATH dataset completion to standard LaTeX form.
+    #     Removes explanations, fixes LaTeX structure, and standardizes answer expressions.
+    #     """
+    #     import re
+    #     from fractions import Fraction
+
+    #     if not ans or not isinstance(ans, str):
+    #         return None
+
+    #     ans = ans.strip().lower()
+
+    #     # 🔹 Strong filter: skip if mostly letters (likely sentence)
+    #     if sum(c.isalpha() for c in ans) > 0.5 * len(ans):
+    #         return None
+
+    #     # 🔹 Sentence heuristic: long phrases or ending with '.'
+    #     if ans.count(" ") > 3 or ans.endswith("."):
+    #         return None
+
+    #     # 🔹 Remove LaTeX wrappers and special symbols
+    #     ans = ans.replace("\\boxed{", "").replace("\\fbox{", "")
+    #     ans = ans.replace("\\left", "").replace("\\right", "")
+    #     ans = ans.replace("\\(", "").replace("\\)", "")
+    #     ans = ans.replace("$", "")
+    #     ans = ans.replace("\\%", "").replace("%", "")
+    #     ans = ans.replace("°", "").replace("^\\circ", "").replace("^{\\circ}", "")
+    #     ans = ans.replace("\\!", "")
+
+    #     # 🔹 Strip unmatched braces early
+    #     ans = ans.replace("{", "").replace("}", "")
+
+    #     # 🔹 Replace common unicode math symbols
+    #     ans = ans.replace("π", "\\pi")
+    #     ans = ans.replace("√", "\\sqrt")
+    #     ans = ans.replace("θ", "\\theta")
+
+    #     # 🔹 Try converting decimals to fractions
+    #     try:
+    #         float_val = float(ans)
+    #         frac = Fraction(float_val).limit_denominator(100)
+    #         if abs(frac.numerator / frac.denominator - float_val) < 1e-6:
+    #             ans = f"\\frac{{{frac.numerator}}}{{{frac.denominator}}}"
+    #     except:
+    #         pass  # skip if not a float
+
+    #     # 🔹 Fix \frac\pi2 → \frac{\pi}{2}
+    #     ans = re.sub(r'\\frac\s*\\?([a-zA-Z0-9]+)\s*([a-zA-Z0-9]+)', r'\\frac{\1}{\2}', ans)
+
+    #     # 🔹 Convert plain a/b to \frac{a}{b} (if clean enough)
+    #     def replace_simple_frac(match):
+    #         num, denom = match.group(1), match.group(2)
+    #         if '.' in num or '.' in denom:
+    #             return f"{num}/{denom}"
+    #         return f"\\frac{{{num}}}{{{denom}}}"
+    #     ans = re.sub(r'([a-zA-Z\\]+|\d+)/([a-zA-Z\\]+|\d+)', replace_simple_frac, ans)
+
+    #     # 🔹 Normalize tuples like (3,\pi/2) → (3,\frac{\pi}{2})
+    #     ans = re.sub(r'\((\d+),\\pi/(\d+)\)', lambda m: f'({m.group(1)},\\frac{{\\pi}}{{{m.group(2)}}})', ans)
+
+    #     # 🔹 Final cleanups
+    #     ans = ans.replace(" ", "")  # ✅ Remove all spaces
+    #     ans = ans.replace("/", "")  # ✅ Optional: remove slashes to make comparison strict
+    #     ans = ans.strip()
+
+    #     return ans if len(ans) >= 2 else None
 
 
 class SVAMPEvaluator(Evaluator):
