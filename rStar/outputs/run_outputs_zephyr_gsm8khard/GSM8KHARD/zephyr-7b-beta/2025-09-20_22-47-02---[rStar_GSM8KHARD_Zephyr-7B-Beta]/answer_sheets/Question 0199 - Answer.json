@@ -1,0 +1,1 @@
+{"id": 199, "problem": "John has 8107792 houses with 3 bedrooms each.  Each bedroom has 8107792 windows each.  There are an additional 4 windows in each house not connected to bedrooms.  How many total windows are there between the houses?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": 48646760.0, "gold_answer": "48646760.0"}
