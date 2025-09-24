@@ -274,26 +274,162 @@ class MATHEvaluator(Evaluator):
     def __init__(self) -> None:
         super().__init__()
 
+    
     def check_answers_equiv(self, answer_a: str, answer_b: str):
-        if answer_a is None or answer_b is None:
-            return False
-
-        if answer_a == "" or answer_b == "":
+        if not answer_a or not answer_b:
             return False
 
         answer_a = answer_a.strip()
         answer_b = answer_b.strip()
 
+    # 严格相等（忽略大小写）
         if answer_a.lower() == answer_b.lower():
+            return True
+
+        similarity = fuzz.ratio(answer_a.lower(), answer_b.lower())
+
+        if similarity >= 50:
             return True
 
         try:
             res = latex_equiv(answer_a, answer_b)
         except Exception as e:
-            print(e)
+            print("Latex check error:", e)
             res = False
 
         return res
+
+    # def check_answers_equiv(self, answer_a: str, answer_b: str):
+    #     if answer_a is None or answer_b is None:
+    #         return False
+
+    #     if answer_a == "" or answer_b == "":
+    #         return False
+
+    #     answer_a = answer_a.strip()
+    #     answer_b = answer_b.strip()
+
+    #     if answer_a.lower() == answer_b.lower():
+    #         return True
+
+    #     try:
+    #         res = latex_equiv(answer_a, answer_b)
+    #     except Exception as e:
+    #         print(e)
+    #         res = False
+
+    #     return res
+
+    # def check_answers_equiv(self, answer_a: str, answer_b: str):
+    #     """Judge whether two answers are equivalent."""
+    #     is_number_a, number_a = self._is_number(answer_a)
+    #     is_number_b, number_b = self._is_number(answer_b)
+    #     if is_number_a and is_number_b:
+    #         correct = number_a == number_b
+    #     else:
+    #         correct = False
+
+    #     return correct
+
+    # def _fix_sqrt(string):
+    #     if "\\sqrt" not in string:
+    #         return string
+
+    #     splits = string.split("\\sqrt")
+    #     new_string = splits[0]
+
+    #     for split in splits[1:]:
+    #         if len(split) == 0:
+    #             # 防止 split[0] 越界
+    #             new_substr = "\\sqrt"
+    #         elif split[0] != "{":
+    #             a = split[0]
+    #             rest = split[1:] if len(split) > 1 else ""
+    #             new_substr = "\\sqrt{" + a + "}" + rest
+    #         else:
+    #             new_substr = "\\sqrt" + split
+    #         new_string += new_substr
+
+    #     return new_string
+
+
+    # def _strip_string(string):
+    #     # linebreaks
+    #     string = string.replace("\n", "")
+        
+    #     # remove inverse spaces
+    #     string = string.replace("\\!", "")
+        
+    #     # replace \\ with \
+    #     string = string.replace("\\\\", "\\")
+
+    #     # replace tfrac and dfrac with frac
+    #     string = string.replace("tfrac", "frac")
+    #     string = string.replace("dfrac", "frac")
+
+    #     # remove \left and \right
+    #     string = string.replace("\\left", "")
+    #     string = string.replace("\\right", "")
+
+    #     # Remove degree symbols
+    #     string = string.replace("^{\\circ}", "")
+    #     string = string.replace("^\\circ", "")
+
+    #     # Remove dollar signs
+    #     string = string.replace("\\$", "")
+
+    #     # Remove units (on the right)
+    #     string = _remove_right_units(string)
+
+    #     # Remove percentage signs
+    #     string = string.replace("\\%", "")
+    #     string = string.replace("\%", "")
+
+    #     # Fix leading dot
+    #     string = string.replace(" .", " 0.")
+    #     string = string.replace("{.", "{0.")
+    #     if len(string) > 0 and string[0] == ".":
+    #         string = "0" + string
+
+    #     # Remove variable assignment like "x = ..." → "..."
+    #     if "=" in string and len(string.split("=")) == 2:
+    #         left, right = string.split("=")
+    #         if len(left.strip()) <= 2:
+    #             string = right.strip()
+
+    #     # fix unbraced sqrt: \sqrt3 → \sqrt{3}
+    #     string = _fix_sqrt(string)
+
+    #     # remove all whitespace
+    #     string = string.replace(" ", "")
+
+    #     # convert \frac1b or 1/2 etc. to LaTeX fractions
+    #     string = _fix_fracs(string)
+
+    #     # convert "0.5" to "\frac{1}{2}"
+    #     if string == "0.5":
+    #         string = "\\frac{1}{2}"
+
+    #     # convert simple a/b to \frac{a}{b}
+    #     string = _fix_a_slash_b(string)
+
+    #     return string
+
+    # def check_answers_equiv(self, str1, str2, verbose=True):
+    #     if str1 is None and str2 is None:
+    #         print("WARNING: Both None")
+    #         return True
+    #     if str1 is None or str2 is None:
+    #         return False
+
+    #     try:
+    #         ss1 = _strip_string(str1)
+    #         ss2 = _strip_string(str2)
+    #         if verbose:
+    #             print(ss1, ss2)
+    #         return ss1 == ss2
+    #     except:
+    #         return str1 == str2
 
     def extract_answer_from_gold_solution(self, solution: str):
         def remove_boxed(s):
@@ -332,12 +468,159 @@ class MATHEvaluator(Evaluator):
 
             return retval
 
+        #return self._normalize_math_answer(remove_boxed(last_boxed_only_string(solution)))
         return remove_boxed(last_boxed_only_string(solution))
+
+    # def extract_answer_from_gold_solution(self, solution: str | float):
+    #     """Extract the answer from the gold solution."""
+    #     if isinstance(solution, float):
+    #         return str(solution)
+    #     return solution.split("#### ")[-1].strip()
+
+    # def extract_answer_from_model_completion(self, completion: str):
+    #     """Extract the answer from the model completion."""
+    #     if completion is None:
+    #         return None
+
+    #     assert isinstance(completion, str)
+
+    #     preds = completion
+    #     preds = preds.split(self.answer_marker)
+    #     answer_flag = True if len(preds) > 1 else False
+    #     if answer_flag:
+    #         pred = preds[1]
+    #     else:
+    #         pred = preds[-1]
+
+    #     pred = pred.replace(",", "")
+    #     pred = [s for s in re.findall(r"-?\d+\.?\d*", pred)]
+
+    #     if len(pred) == 0:
+    #         return None
+    #     else:
+    #         if answer_flag:
+    #             pred = pred[0]
+    #         else:
+    #             pred = pred[-1]
+
+    #     if pred != "" and pred[-1] == ".":
+    #         pred = pred[:-1]
+
+    #     pred = pred.replace(",", "").replace("\n", "")
+    #     is_number, pred = self._is_number(pred)
+    #     if is_number:
+    #         return pred
+    #     else:
+    #         return None
 
     def extract_answer_from_model_completion(self, completion):
         answer_split = self.isolate_answer(completion)
+       # print("Before Extracted answer: ", answer_split)
+        
+        # Enhanced cleanup: extract content from \boxed{...} or $...$ if present
+        if answer_split:
+            import re
+            # Handle \boxed{...} format - find the LAST one (most likely final answer)
+            if "\\boxed{" in answer_split:
+                matches = re.findall(r"\\boxed\{([^}]+)\}", answer_split)
+                if matches:
+                    answer_split = matches[-1]  # Get the last match
+            # Handle $...$ format - find the LAST one
+            elif "$" in answer_split:
+                matches = re.findall(r"\$([^$]+)\$", answer_split)
+                if matches:
+                    answer_split = matches[-1]  # Get the last match
+            # For very long answers, try to extract the last formula/expression after =
+            elif len(answer_split) > 100:
+                # Look for patterns like "= ..." at the end
+                match = re.search(r"=\s*([^=\n]+?)(?:\s*$|\s*\n|\s*\.)", answer_split)
+                if match:
+                    answer_split = match.group(1).strip()
+                # If still too long, try to get the last mathematical expression
+                if len(answer_split) > 50:
+                    # Look for the last $...$ or mathematical expression
+                    math_match = re.search(r"([^=\n]+?)(?:\s*$|\s*\n)", answer_split)
+                    if math_match:
+                        answer_split = math_match.group(1).strip()
+        
+       # print("Extracted answer: ", answer_split)
         return answer_split
 
+    # def extract_answer_from_model_completion(self, completion):
+    #     answer_split = self.isolate_answer(completion)
+    #     norm = self._normalize_math_answer(answer_split)
+    
+    #     return norm
+
+    # def _normalize_math_answer(self, ans):
+    #     """
+    #     Normalize math answer string from MATH dataset completion to standard LaTeX form.
+    #     Removes explanations, fixes LaTeX structure, and standardizes answer expressions.
+    #     """
+    #     import re
+    #     from fractions import Fraction
+
+    #     if not ans or not isinstance(ans, str):
+    #         return None
+
+    #     ans = ans.strip().lower()
+
+    #     # 🔹 Strong filter: skip if mostly letters (likely sentence)
+    #     if sum(c.isalpha() for c in ans) > 0.5 * len(ans):
+    #         return None
+
+    #     # 🔹 Sentence heuristic: long phrases or ending with '.'
+    #     if ans.count(" ") > 3 or ans.endswith("."):
+    #         return None
+
+    #     # 🔹 Remove LaTeX wrappers and special symbols
+    #     ans = ans.replace("\\boxed{", "").replace("\\fbox{", "")
+    #     ans = ans.replace("\\left", "").replace("\\right", "")
+    #     ans = ans.replace("\\(", "").replace("\\)", "")
+    #     ans = ans.replace("$", "")
+    #     ans = ans.replace("\\%", "").replace("%", "")
+    #     ans = ans.replace("°", "").replace("^\\circ", "").replace("^{\\circ}", "")
+    #     ans = ans.replace("\\!", "")
+
+    #     # 🔹 Strip unmatched braces early
+    #     ans = ans.replace("{", "").replace("}", "")
+
+    #     # 🔹 Replace common unicode math symbols
+    #     ans = ans.replace("π", "\\pi")
+    #     ans = ans.replace("√", "\\sqrt")
+    #     ans = ans.replace("θ", "\\theta")
+
+    #     # 🔹 Try converting decimals to fractions
+    #     try:
+    #         float_val = float(ans)
+    #         frac = Fraction(float_val).limit_denominator(100)
+    #         if abs(frac.numerator / frac.denominator - float_val) < 1e-6:
+    #             ans = f"\\frac{{{frac.numerator}}}{{{frac.denominator}}}"
+    #     except:
+    #         pass  # skip if not a float
+
+    #     # 🔹 Fix \frac\pi2 → \frac{\pi}{2}
+    #     ans = re.sub(r'\\frac\s*\\?([a-zA-Z0-9]+)\s*([a-zA-Z0-9]+)', r'\\frac{\1}{\2}', ans)
+
+    #     # 🔹 Convert plain a/b to \frac{a}{b} (if clean enough)
+    #     def replace_simple_frac(match):
+    #         num, denom = match.group(1), match.group(2)
+    #         if '.' in num or '.' in denom:
+    #             return f"{num}/{denom}"
+    #         return f"\\frac{{{num}}}{{{denom}}}"
+    #     ans = re.sub(r'([a-zA-Z\\]+|\d+)/([a-zA-Z\\]+|\d+)', replace_simple_frac, ans)
+
+    #     # 🔹 Normalize tuples like (3,\pi/2) → (3,\frac{\pi}{2})
+    #     ans = re.sub(r'\((\d+),\\pi/(\d+)\)', lambda m: f'({m.group(1)},\\frac{{\\pi}}{{{m.group(2)}}})', ans)
+
+    #     # 🔹 Final cleanups
+    #     ans = ans.replace(" ", "")  # ✅ Remove all spaces
+    #     ans = ans.replace("/", "")  # ✅ Optional: remove slashes to make comparison strict
+    #     #ans = re.sub(r'\\\\?frac\{([^{}]+)\}\{1\}', r'\1', ans)
+    #     #ans = re.sub(r'\\\\?frac\{0\}\{[^{}]+\}', '0', ans)
+    #     ans = ans.strip()
+
+        # return ans if len(ans) >= 2 else None
 
 class SVAMPEvaluator(Evaluator):
     def __init__(self) -> None:

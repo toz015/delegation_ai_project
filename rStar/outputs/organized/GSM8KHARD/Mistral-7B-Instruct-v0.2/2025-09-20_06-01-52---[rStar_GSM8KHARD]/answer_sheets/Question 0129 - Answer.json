@@ -1,0 +1,1 @@
+{"id": 129, "problem": "Jerry is rolling a six-sided die. How much more likely is it (expressed as a percentage) that he rolls a number greater than 3 than that he rolls two even numbers in a row?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": 25.0, "gold_answer": "25.0"}

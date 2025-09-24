@@ -199,7 +199,7 @@ class DelegationAlgorithm:
                         self.discriminate_results_dir = "./temp_discriminator_results"
                         self.api = "vllm"  # Switch to vLLM API for better performance
                         self.model_ckpt = "Qwen/Qwen2-7B-Instruct"  # Use Qwen model for discriminator
-                        self.hf_token ="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"  # Add HF token (None for public models)
+                        self.YOUR_HUGGINGFACE_TOKEN_HERE ="YOUR_HUGGINGFACE_TOKEN_HERE"  # Add HF token (None for public models)
                         self.seed = 42  # Add seed for reproducibility
                         # Add memory optimization parameters
                         self.max_model_len = 2048  # Reduced from 4096 to fix KV cache memory

@@ -1,0 +1,1 @@
+{"id": 42, "problem": "A basket contains 6483292 oranges among which 1 is bad, 20% are unripe, 2 are sour and the rest are good. How many oranges are good?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": 5186630.6, "gold_answer": "5186630.6"}

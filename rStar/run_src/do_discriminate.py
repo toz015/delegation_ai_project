@@ -379,14 +379,14 @@ class MajorityVoteDiscriminator(Discriminator):
         if self.args.api == "vllm":
             self.tokenizer, self.model = load_vLLM_model(
                 args.model_ckpt, 
-                args.hf_token, 
+                args.YOUR_HUGGINGFACE_TOKEN_HERE, 
                 args.seed, 
                 max_num_seqs=args.max_num_seqs,
                 max_model_len=getattr(args, 'max_model_len', None),
                 gpu_memory_utilization=getattr(args, 'gpu_memory_utilization', None)
             )
         elif self.args.api == "huggingface":
-            self.tokenizer, self.model = load_HF_model(args.model_ckpt, args.hf_token)
+            self.tokenizer, self.model = load_HF_model(args.model_ckpt, args.YOUR_HUGGINGFACE_TOKEN_HERE)
         else:
             print("Unspecify Model")
     

@@ -1,0 +1,1 @@
+{"id": "test-algebra-346", "problem": "Let $f(x) = 2x-3$ and $g(x) = x+1$. What is the value of $g(f(5)-1)$?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "We have $f(5) = 2(5) -3 = 7$, so $g(f(5)-1) = g(7-1) = g(6) = 6+1 = \\boxed{7}$.", "gold_answer": "7"}

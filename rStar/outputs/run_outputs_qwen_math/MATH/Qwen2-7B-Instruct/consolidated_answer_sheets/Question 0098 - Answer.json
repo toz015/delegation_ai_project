@@ -1,0 +1,1 @@
+{"id": "test-prealgebra-1924", "problem": "Simplify $(-k + 4) + (-2 + 3k)$.", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "We have $(-k+4) + (-2+3k) = -k + 4 -2 + 3k = \\boxed{2k+2}$.", "gold_answer": "2k+2"}

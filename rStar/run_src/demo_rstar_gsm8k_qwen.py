@@ -28,7 +28,7 @@ args.model_ckpt = "Qwen/Qwen2-7B-Instruct"  # Set this first
 # args.model_ckpt = "mistralai/Mistral-7B-Instruct-v0.2"
 # args.model_ckpt = "meta-llama/Llama-2-7b-chat-hf"
 
-args.hf_token = "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"
+args.YOUR_HUGGINGFACE_TOKEN_HERE = "YOUR_HUGGINGFACE_TOKEN_HERE"
 args.note = "rStar_GSM8K_Qwen2_7B_Instruct"
 args.test_json_filename = "test_all"
 

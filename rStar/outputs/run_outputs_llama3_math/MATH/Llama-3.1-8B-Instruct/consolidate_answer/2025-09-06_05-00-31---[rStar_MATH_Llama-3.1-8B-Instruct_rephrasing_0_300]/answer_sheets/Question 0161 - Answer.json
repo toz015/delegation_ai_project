@@ -1,0 +1,1 @@
+{"id": "test-algebra-1255", "problem": "Evaluate $\\log_264$.", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "We have $2^6=64$, so $\\log_2 64 = \\boxed{6}$.", "gold_answer": "6"}
