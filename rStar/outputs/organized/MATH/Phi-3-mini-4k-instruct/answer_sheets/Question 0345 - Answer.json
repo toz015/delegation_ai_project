@@ -1,0 +1,1 @@
+{"id": "test-algebra-1529", "problem": "If $t(x) = 3-g(x)$ and $g(x) = \\sqrt{x}$, then what is $t(g(16))$?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "We have $g(16) = 4$, so $t(g(16)) = t(4) = 3- g(4) = 3-\\sqrt{4} = 3-2 = \\boxed{1}$.", "gold_answer": "1"}

@@ -1,0 +1,1 @@
+{"id": "test-algebra-276", "problem": "The expression $10x^2-x-24$ can be written as $(Ax-8)(Bx+3),$ where $A$ and $B$ are integers. What is $AB + B$?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": "We see that $10x^2-x-24=(5x-8)(2x+3)$, thus $A = 5$ and $B = 2$. Hence, $AB + B = \\boxed{12}.$", "gold_answer": "12"}
