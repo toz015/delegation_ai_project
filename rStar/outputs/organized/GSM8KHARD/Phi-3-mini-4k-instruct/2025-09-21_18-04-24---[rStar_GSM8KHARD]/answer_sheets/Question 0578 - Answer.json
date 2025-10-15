@@ -1,0 +1,1 @@
+{"id": 578, "problem": "A zookeeper is counting how many lions are in their enclosure. She counts 3202394 female lions, half as many male lions, and 14 lion cubs. How many lions are in the enclosure?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": 4803605.0, "gold_answer": "4803605.0"}

@@ -1,0 +1,1 @@
+{"id": 485, "problem": "In a company of 1413071 employees, 20% of the employees are management.  Out of this 20%, only 30% oversee the entire company.  How many employees oversee the company?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": 84784.26, "gold_answer": "84784.26"}

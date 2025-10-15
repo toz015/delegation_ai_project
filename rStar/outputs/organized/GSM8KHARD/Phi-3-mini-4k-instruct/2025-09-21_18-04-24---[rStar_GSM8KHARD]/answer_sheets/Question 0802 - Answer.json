@@ -1,0 +1,1 @@
+{"id": 802, "problem": "There are currently 3 red balls, 1999628 blue balls, and 25 green balls in the store. Red balls cost $9, Blue balls cost $5 and green balls cost $3. How much will the store have received after all the balls are sold?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": 9998242.0, "gold_answer": "9998242.0"}

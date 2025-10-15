@@ -1,0 +1,1 @@
+{"id": 880, "problem": "To make a call from a payphone, you must pay $1.0 for each minute of your call. After 16 minutes, that price drops to $0.2 per minute. How much would a 36-minute call cost?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": 20.0, "gold_answer": "20.0"}

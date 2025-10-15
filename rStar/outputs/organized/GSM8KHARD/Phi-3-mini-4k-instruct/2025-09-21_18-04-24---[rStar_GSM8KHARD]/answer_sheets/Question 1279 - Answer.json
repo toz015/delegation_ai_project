@@ -1,0 +1,1 @@
+{"id": 1279, "problem": "A class of 4404546 students is split into 3 groups such that 2 of them are equal in number and the last one (which is the smallest) is 10 less than each of the other groups. How many students are in this (smallest) group?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": 60.0, "gold_answer": "60.0"}

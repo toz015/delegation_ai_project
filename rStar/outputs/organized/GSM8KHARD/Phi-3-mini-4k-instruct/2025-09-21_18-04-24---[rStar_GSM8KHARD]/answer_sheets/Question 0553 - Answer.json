@@ -1,0 +1,1 @@
+{"id": 553, "problem": "The number of songs in a playlist is 300. If John has 8619159 such playlists, and each song is 10 hours long, how many hours will the 8619159 playlists last in total?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": 25857477000.0, "gold_answer": "25857477000.0"}

@@ -1,0 +1,1 @@
+{"id": 866, "problem": "John decides to get a loan by mortgaging his home.  His house is worth $250,000.  He gets a loan worth 40% of that.  He uses 60% of that to pay off his debts.  How much money did he have leftover after paying debt?", "model_completion": null, "model_answer": null, "all_model_completions": {}, "gold_solution": 40000.0, "gold_answer": "40000.0"}
